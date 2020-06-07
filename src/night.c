@@ -53,22 +53,60 @@ void set_night_mode(bool night) {
 
 extern bool keepRunning;
 
+void *thread_ipcam_pwm(void *vargp)
+{
+    int pwm_num = 0, direction = 0;
+    while(1){
+        if(!direction){
+            pwm_num += 50;
+            if(pwm_num >= 1000){
+                direction = 1;
+            }
+        }
+        else
+        {
+            pwm_num -= 50;
+            if(pwm_num <= 0){
+                direction = 0;
+            }
+        }
+        hi3518_pwm_set(pwm_num);
+        usleep(100000);
+    }
+}
+
 void* night_thread_func(void *vargp)  
 {
-    int adc_value = 0;
+    pthread_t tid_ipcam_led;
+    int adc_value = 0, night_mode = 0, rblink = 0, ret = 0;
     usleep(1000);
     hi3518_adc_init();
+    printf("Change mode to DAY\n");
+    ircut_off();
+
+    ret = pthread_create(&tid_ipcam_led , NULL , thread_ipcam_pwm , NULL);
+    if(ret){
+        perror("thread_ipcam_pwm creat error!\r\n");
+    }
     while (keepRunning)
     {
         adc_value = hi3518_adc_get();
         if(adc_value > app_config.ir_sensor_threshold){//ir_sensor_threshold
-            printf("Change mode to DAY\n");
-            ircut_off();
-        }else{
-            printf("Change mode to NIGHT\n");
-            ircut_on();
+            if(night_mode){
+                printf("Change mode to DAY\n");
+                ircut_off();
+            }
+            night_mode = 0;
         }
-        printf("hi3518_adc_get-> %d\r\n", adc_value);
+        else
+        {
+            if(!night_mode){
+                printf("Change mode to NIGHT\n");
+                ircut_on();
+            }
+            night_mode = 1;
+        }
+        // printf("hi3518_adc_get-> %d\r\n", adc_value);
         sleep(app_config.check_interval_s);
     }
 }

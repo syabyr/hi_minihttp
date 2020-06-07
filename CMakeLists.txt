@@ -1,21 +1,28 @@
 cmake_minimum_required(VERSION 2.8)
 project(minihttp C)
 
+set(CROSS_COMPILE arm-openwrt-linux)
+set(CMAKE_C_COMPILER ${CROSS_COMPILE}-gcc)
+set(CMAKE_CXX_COMPILER ${CROSS_COMPILE}-g++)
+message(${CROSS_COMPILE})
+
 # set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_FLAGS "-std=gnu99")
 
 
 include_directories(
-    ./src/
-    /home/sean/Develop/hi3518/chaos_calmer/staging_dir/target-arm_arm926ej-s_uClibc-0.9.33.2_eabi/usr/include/hisi-osdrv2
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/
+    ${CMAKE_CURRENT_SOURCE_DIR}/osdrv/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/mp4v2/include
 )
 
 link_directories(
-    /home/sean/Develop/hi3518/chaos_calmer/staging_dir/target-arm_arm926ej-s_uClibc-0.9.33.2_eabi/usr/lib
+    ${CMAKE_CURRENT_SOURCE_DIR}/osdrv/lib
+    ${CMAKE_CURRENT_SOURCE_DIR}/mp4v2/lib
 )
 
 set(HILIBS
-    isp _hiae _hiawb _hiaf _hidefog
+    isp _hiae _hiawb _hiaf _hidefog mp4v2
     pthread m dl
     ive md mpi tde upvqe dnvqe VoiceEngine
 )
